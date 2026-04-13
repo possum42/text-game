@@ -1,103 +1,183 @@
-def showInstructions():
-    #print a main menu and the commands
-    print(
-        """
-            RPG Game
-            ========
-            
-            Get to the Garden with a key and a potion
-            Avoid the monsters!
-            
-            Cofmmands:
-            go [direction]
-            get [item]
-            """
-        )
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Text Game</title>
 
-def showStatus():
-    #print the player's current status
-    print('---------------------------')
-    print('You are in the ' + currentRoom)
-    #print the current inventory
-    print('Inventory : ' + str(inventory))
-    #print an item if there is one
-    if "item" in rooms[currentRoom]:
-        print('You see a ' + rooms[currentRoom]['item'])
-    print("---------------------------")
+    <!-- PyScript -->
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
 
-#an inventory, which is initially empty
+    <style>
+        body {
+            background: #111;
+            color: #0f0;
+            font-family: monospace;
+            padding: 20px;
+        }
+        #terminal {
+            width: 100%;
+            height: 400px;
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            overflow-y: auto;
+            border: 2px solid #0f0;
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+        #inputBox {
+            width: 100%;
+            padding: 10px;
+            background: #000;
+            color: #0f0;
+            border: 2px solid #0f0;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Python Text Game</h2>
+
+<div id="terminal"></div>
+<input id="inputBox" placeholder="Type command and press Enter">
+
+<py-script>
+from js import document
+
+# -------------------------
+# ORIGINAL GAME VARIABLES
+# -------------------------
+
 inventory = []
 
-#a dictionary linking a room to other rooms
 rooms = {
-    'Hall' : {
-        'south' : 'Kitchen',
-        'east' : 'Dining Room',
-        'item' : 'key'
+    'Hall': {
+        'south': 'Kitchen',
+        'east': 'Dining Room',
+        'item': 'key'
     },
-    'Kitchen' : {
-        'north' : 'Hall',
-        'item' : 'monster'
+    'Kitchen': {
+        'north': 'Hall',
+        'item': 'monster'
     },
-    'Dining Room' : {
-        'west' : 'Hall',
-        'south' : 'Garden',
-        'item' : 'potion'
-        },
-    'Garden' : {
-        'north' : 'Dining Room'
-        }
+    'Dining Room': {
+        'west': 'Hall',
+        'south': 'Garden',
+        'item': 'potion'
+    },
+    'Garden': {
+        'north': 'Dining Room'
+    }
 }
 
-#start the player in the Hall
-currentRoom = 'Hall'
+currentRoom = "Hall"
 
-showInstructions()
+# -------------------------
+# TERMINAL OUTPUT FUNCTION
+# -------------------------
 
-#loop forever
+def print_to_terminal(text):
+    term = document.getElementById("terminal")
+    term.innerHTML += text + "\n"
+    term.scrollTop = term.scrollHeight
 
-# loop forever
-while True:
+# -------------------------
+# GAME DISPLAY FUNCTIONS
+# -------------------------
 
-    showStatus()
+def showInstructions():
+    print_to_terminal(
+        "RPG Game\n"
+        "========\n"
+        "Get to the Garden with a key and a potion\n"
+        "Avoid the monsters!\n\n"
+        "Commands:\n"
+        "go [direction]\n"
+        "get [item]\n"
+    )
 
-    move = ''
-    while move == '':
-        move = input('>')
+def showStatus():
+    print_to_terminal("---------------------------")
+    print_to_terminal("You are in the " + currentRoom)
+    print_to_terminal("Inventory: " + str(inventory))
+    if "item" in rooms[currentRoom]:
+        print_to_terminal("You see a " + rooms[currentRoom]["item"])
+    print_to_terminal("---------------------------")
 
-    move = move.lower().split()
+# -------------------------
+# GAME LOOP HANDLER
+# -------------------------
 
-    # if they type 'go' first
-    if move[0] == 'go':
-        if move[1] in rooms[currentRoom]:
-            currentRoom = rooms[currentRoom][move[1]]
+def process_command(cmd):
+    global currentRoom
+
+    parts = cmd.lower().split()
+    if len(parts) == 0:
+        return
+
+    # GO COMMAND
+    if parts[0] == "go":
+        if len(parts) < 2:
+            print_to_terminal("Go where?")
+            return
+
+        direction = parts[1]
+
+        if direction in rooms[currentRoom]:
+            currentRoom = rooms[currentRoom][direction]
 
             # MONSTER CHECK
             if "item" in rooms[currentRoom] and rooms[currentRoom]["item"] == "monster":
-                print("The monster got you... GAME OVER!")
-                break
+                print_to_terminal("The monster got you... GAME OVER!")
+                return
 
         else:
-            print("You can't go that way!")
+            print_to_terminal("You can't go that way!")
 
-    # if they type 'get' first
-    if move[0] == 'get':
-        if "item" in rooms[currentRoom] and move[1] in rooms[currentRoom]['item']:
-            inventory += [move[1]]
-            print(' You picked up the ' + move[1])
-            del rooms[currentRoom]['item']
+    # GET COMMAND
+    elif parts[0] == "get":
+        if len(parts) < 2:
+            print_to_terminal("Get what?")
+            return
+
+        item = parts[1]
+
+        if "item" in rooms[currentRoom] and item == rooms[currentRoom]["item"]:
+            inventory.append(item)
+            print_to_terminal("You picked up the " + item)
+            del rooms[currentRoom]["item"]
         else:
-            print("Can't get " + move[1] + "!")
+            print_to_terminal("Can't get " + item + "!")
 
-    # win condition
-    if currentRoom == 'Garden' and 'key' in inventory and 'potion' in inventory:
-        print('You escaped the house... YOU WIN!')
-        break
-            
-        # after moving into a new room
-    if "item" in rooms[currentRoom] and rooms[currentRoom]["item"] == "monster":
-            print("The monster got you... GAME OVER!")
-            
+    # WIN CHECK
+    if currentRoom == "Garden" and "key" in inventory and "potion" in inventory:
+        print_to_terminal("You escaped the house... YOU WIN!")
+        return
 
+    showStatus()
 
+# -------------------------
+# INITIALIZE GAME
+# -------------------------
 
+showInstructions()
+showStatus()
+
+# -------------------------
+# INPUT HANDLER
+# -------------------------
+
+def on_enter(event):
+    if event.key == "Enter":
+        cmd = document.getElementById("inputBox").value
+        document.getElementById("inputBox").value = ""
+        print_to_terminal("> " + cmd)
+        process_command(cmd)
+
+document.getElementById("inputBox").addEventListener("keydown", on_enter)
+</py-script>
+
+</body>
+</html>
